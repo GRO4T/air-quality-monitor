@@ -1,3 +1,5 @@
+import argparse
+import datetime
 import time
 import struct
 from typing import NamedTuple
@@ -13,7 +15,7 @@ class Particles(NamedTuple):
 	v_03um: int
 	v_05um: int
 	v_10um: int
-	v_25um: int
+    v_25um: int
 	v_50um: int
 	v_100um: int
 
@@ -117,6 +119,10 @@ def communicate(sensor: Sensor):
 
 
 def main():
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--loop", action=argparse.BooleanOptionalAction, help="Loop forever")
+	args = parser.parse_args()
+
 	port = Serial(
 		port="/dev/serial0",
 		baudrate=9600,
@@ -124,14 +130,20 @@ def main():
 	)
 	sensor = Sensor(port)
 
-	try:
-		communicate(sensor)
-	except KeyboardInterrupt:
-		print("Program interrupted by user")
-	finally:
-		port.close()
-		print("Serial port closed")
-
+	if args.loop:
+		try:
+			communicate(sensor)
+		except KeyboardInterrupt:
+			print("Program interrupted by user")
+		finally:
+			port.close()
+			print("Serial port closed")
+	else:
+		m = sensor.get_measurement()
+		with open("/var/log/aqm.log", "a") as f:
+			f.write(
+				f"{datetime.datetime.now()} pm1: {m.pm_standard.v_1_0} pm25: {m.pm_standard.v_2_5} pm10: {m.pm_standard.v_10_0}\n"
+			)
 
 if __name__ == "__main__":
 	main()
