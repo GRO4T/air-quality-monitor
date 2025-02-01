@@ -1,3 +1,4 @@
 #!/bin/bash
 source ./venv/bin/activate
+export INFLUXDB_TOKEN=$(cat ./.env.influxdb2-admin-token)
 python3 main.py "$@"
