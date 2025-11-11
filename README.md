@@ -1,17 +1,31 @@
+
 # Air Quality Monitor
 
-This repository provides instructions on how to build a simple air quality
-monitor using PMS5003 and Raspberry Pi.
+This repository contains the code and instructions to build a simple air-quality
+monitor using a Plantower PMS5003 sensor and a Raspberry Pi.
+
+## Quick overview
+
+- Sensor: PMS5003 (particulate matter / PM2.5, PM10)
+- Target platform: Raspberry Pi (3B+ or any 40-pin Pi with UART)
+- Components: Python scripts, a small helper `aqm` binary, and a local InfluxDB
+	stack for storing measurements.
 
 ## Prerequisites
 
-* PMS5003 air quality sensor,
-* Raspberry Pi 3B+ (or any other board with 5V UART),
-* Python3 installed on the board.
+- PMS5003 air quality sensor
+- Raspberry Pi (3B+, 4, or similar) with UART pins exposed
+
+On the Pi you should have:
+- Python 3
+- Docker & Docker Compose (for InfluxDB in this project)
 
 ## Setup
 
-### Connect PMS5003 sensor to Raspberry Pi
+
+Below are the common steps to prepare the Pi and get the project running.
+
+### 1) Connect PMS5003 sensor to Raspberry Pi
 
 #### PMS5003 Pinout ([source](https://elty.pl/upload/download/PMS5003_LOGOELE.pdf))
 
@@ -40,17 +54,80 @@ In order to connect the sensor to the board, connect the corresponding power (VC
 
 ![](docs/pms5003_to_raspberrypi.png)
 
+### 2) Copy project files to the Pi
 
+Use the included Makefile target:
+
+```
+make sync HOST=<host>
+```
+
+### 3) SSH with port-forwarding (InfluxDB UI)
+
+This project uses InfluxDB which exposes a web UI on port `8086` by default.
+To access the UI from your workstation via SSH forwarding run:
+
+```
+ssh -L 8086:localhost:8086 pi@<host>
+```
+
+### 4) Install Python dependencies (on the Pi)
+
+On the Pi, from the project directory:
+
+```
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+(Make sure `python3-venv` is installed on the Pi if `venv` creation fails.)
+
+### 5) Deploy InfluxDB (Docker Compose)
+
+From the project directory on the Pi:
+
+```
+docker compose up -d
+```
+
+This will bring up the InfluxDB service and any other containers defined in
+`docker-compose.yml`.
+
+### 6) Schedule sensor measurements in cron
+
+Edit the Pi user's crontab (`crontab -e`) and add:
+
+```
+* * * * * cd $HOME/air-quality-monitor && ./aqm
+```
+
+This runs the `aqm` helper once every minute (adjust schedule as needed).
+
+### 7) (Optional) Create a Wi-Fi hotspot on the Pi
+
+If you want to access InfluxDB UI without SSH and port forwarding:
+
+```
+sudo nmcli device wifi hotspot ssid <SSID> password <PASSWORD> ifname wlan0
+```
+
+Then find the Pi's IP via `ifconfig` or `hostname -I` and connect from your
+client device.
+
+## Verify everything is working
+
+- After `docker compose up -d` and the sensor is running, check InfluxDB UI at
+	`http://localhost:8086` (via SSH tunnel) and verify measurements appear.
+- Check `docker compose ps` to confirm containers are healthy.
+- Inspect logs for the `aqm` process or `main.py` if measurements are missing.
 
 
 ## Resources
 
-[PMS5003 Data Sheet](https://www.aqmd.gov/docs/default-source/aq-spec/resources-page/plantower-pms5003-manual_v2-3.pdf)
-
-[PMS5003 Data Sheet 2](https://elty.pl/upload/download/PMS5003_LOGOELE.pdf)
-
-[Raspberry Pi Docs](https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#gpio-pads-control)
-
+- PMS5003 datasheet: https://www.aqmd.gov/docs/default-source/aq-spec/resources-page/plantower-pms5003-manual_v2-3.pdf
+- PMS5003 pinout PDF: https://elty.pl/upload/download/PMS5003_LOGOELE.pdf
+- Raspberry Pi GPIO docs: https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#gpio-pads-control
 
 
 
