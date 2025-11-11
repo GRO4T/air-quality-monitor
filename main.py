@@ -19,10 +19,11 @@ def get_measurement(sensor: Sensor) -> Measurement:
 
 def communicate(sensor: Sensor):
     try:
-        try:
-            get_measurement(sensor)
-        except SensorError as sensor_error:
-            logger.error(f"SensorError: {sensor_error}")
+        while True:
+            try:
+                get_measurement(sensor)
+            except SensorError as sensor_error:
+                logger.error(f"SensorError: {sensor_error}")
     except KeyboardInterrupt:
         logger.info("Program interrupted by user")
     finally:
