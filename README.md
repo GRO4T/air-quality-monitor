@@ -1,7 +1,7 @@
 
 # Air Quality Monitor
 
-This repository contains the code and instructions to build a simple air-quality
+This repository contains the code and instructions to build a simple air quality
 monitor using a Plantower PMS5003 sensor and a Raspberry Pi.
 
 ## Quick overview
@@ -21,7 +21,6 @@ On the Pi you should have:
 - Docker & Docker Compose (for InfluxDB in this project)
 
 ## Setup
-
 
 Below are the common steps to prepare the Pi and get the project running.
 
@@ -115,6 +114,15 @@ sudo nmcli device wifi hotspot ssid <SSID> password <PASSWORD> ifname wlan0
 Then find the Pi's IP via `ifconfig` or `hostname -I` and connect from your
 client device.
 
+#### 7.1) (Optional) Configure the hotspot to be created on boot
+
+Open `/etc/NetworkManager/system-connections/Hotspot.nmconnection`:
+```
+[connection]
+...
+autoconnect=true # <-- Start on boot
+```
+
 ## Verify everything is working
 
 - After `docker compose up -d` and the sensor is running, check InfluxDB UI at
@@ -128,6 +136,5 @@ client device.
 - PMS5003 datasheet: https://www.aqmd.gov/docs/default-source/aq-spec/resources-page/plantower-pms5003-manual_v2-3.pdf
 - PMS5003 pinout PDF: https://elty.pl/upload/download/PMS5003_LOGOELE.pdf
 - Raspberry Pi GPIO docs: https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#gpio-pads-control
-
-
+- Raspberry Pi configuration docs: https://www.raspberrypi.com/documentation/computers/configuration.html
 
